@@ -63,7 +63,7 @@ class MainMenu:
                         self.sound.play()
                         pygame.mixer.music.pause()
                         g = Game()
-                        g.game_run()
+                        g.GameRun()
                         run = False
                     elif self.muse_btn[0] <= x <= self.muse_btn[0] + self.muse_btn[2] \
                             and self.muse_btn[1] <= y <= self.muse_btn[1] + self.muse_btn[3]:

@@ -25,64 +25,61 @@ start_time = 0
 
 class Game:
     def __init__(self):
+        # image
         self.width, self.height = 1024, 600
         self.win = pygame.display.set_mode((self.width, self.height))
-        self.gamebg = pygame.image.load(os.path.join("images/Map.png"))
         self.gamebg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Map.png")), (self.width, self.height))
         self.virus_gray_img = pygame.transform.scale(pygame.image.load("images/Virus_gray.png"), (40, 40))
         self.virus_img = pygame.transform.scale(pygame.image.load("images/Virus.png"), (40, 40))
         # game button
-        self.gamesound_btn = pygame.Rect(695, 5, 70, 70)  # x y 寬 高
-        self.gamesound_out = pygame.Rect(690, 0, 80, 80)
-        self.gamemuse_btn = pygame.Rect(780, 5, 70, 70)
-        self.gamemuse_out = pygame.Rect(775, 0, 80, 80)
-        self.gamestart_btn = pygame.Rect(860, 5, 70, 70)
-        self.gamestart_out = pygame.Rect(855, 0, 80, 80)
-        self.gamestop_btn = pygame.Rect(945, 5, 70, 70)
-        self.gamestop_out = pygame.Rect(940, 0, 80, 80)
-        self.buttons = [self.gamestart_btn, self.gamestop_btn, self.gamesound_btn, self.gamemuse_btn]
-        self.buttons_out = [self.gamestart_out, self.gamestop_out, self.gamesound_out, self.gamemuse_out]
+        self.game_sound_btn = Buttons(695, 5, 70, 70)  # x y 寬 高
+        self.game_muse_btn = Buttons(780, 5, 70, 70)
+        self.game_start_btn = Buttons(860, 5, 70, 70)
+        self.game_stop_btn = Buttons(945, 5, 70, 70)
+        self.buttons = [self.game_start_btn, self.game_stop_btn, self.game_sound_btn, self.game_muse_btn]
+        # font
         self.score_size = 32
         self.set_font = pygame.font.Font(None, self.score_size)
-        # sound
+        self.warning_text = None
+        # player
+        self.start_time = 0
+        self.money = 100
         self.sound = pygame.mixer.Sound("./sound/sound.flac")
-        # live 
         self.virus_limit = 10
         self.virus_num = 6
-        # base
         self.base = pygame.Rect(430, 90, 195, 130)
-        # tower
-        self.towers = [Pcr(100, 500), RapidTest(400, 420), Alcohol(300, 250)]
         # enemy
         self.enemies = []
         self.gen_enemy_time = time.time() - 1
-        # delete
-        self.clicks = []
+        # tower
+        self.tower_menu = TowerMenu()
+        self.selected_item = None
+        self.towers = [Pcr(100, 500), RapidTest(400, 420), Alcohol(300, 250)]
 
     def game_screen(self):
         self.win.blit(self.gamebg, (0, 0))
         pygame.display.set_caption("Covid-19 Defense Game")
 
-    def gamemusic(self):
+    def game_music(self):
         pygame.mixer.music.load("./sound/menu.wav")
         pygame.mixer.music.set_volume(0.2)
         self.sound.set_volume(0.2)
         pygame.mixer.music.play(100)
 
     def generate_enemies(self):
-        """
-        generate the next enemy
-        :return: None
-        """
         if time.time() - self.gen_enemy_time >= 2:  # wave interval
             self.gen_enemy_time = time.time()
             self.enemies.append(random.choice([Virus()]))
-    
+
     def draw(self):
+        """
+        all that related to drawing the images work in this function
+        :return:
+        """
         # base
-        pygame.draw.rect(self.gamebg, BLACK, self.base, 5)
-        
-        #timer
+        pygame.draw.rect(self.gamebg, BLACK, pygame.Rect(430, 90, 195, 130), 5)
+
+        # timer
         pygame.draw.rect(self.win, BLACK, [0, self.height - 40, 80, 40])
         count_time = pygame.time.get_ticks() - self.start_time
         count_sec = int((count_time % 60000)/1000)
@@ -92,76 +89,69 @@ class Game:
         time_Rect.center = (40, self.height-20)
         self.win.blit(time_text, time_Rect)
 
-        #level 
+        # level
         level_num = count_min+1
-        lv_center_move = len(str(level_num))-1
-        level_text = self.set_font.render('level: '+str(level_num), True, (255,255,255))
-        level_Rect = level_text.get_rect()
-        pygame.draw.rect(self.win, 0, [0, 0, 160, 40])
-        level_Rect.center = (40+lv_center_move*7.5, 20)
-        self.win.blit(level_text, level_Rect)
+        level_text = self.set_font.render(f"level: {level_num}", True, (255, 255, 255))
+        self.win.blit(level_text, (5, 10))
         
-        #money
-        money_num = int(count_time/100)
-        mr_center_move = len(str(money_num))-1
-        money_text = self.set_font.render('money:', True, (255, 255, 255))
-        money_Rect = money_text.get_rect()
-        pygame.draw.rect(self.win, 0, [0, 40, 80, 40])
-        money_Rect.center = (40, 60)
-        self.win.blit(money_text, money_Rect)
-        
-        money_num_text = self.set_font.render(str(money_num), True, (255, 255, 255))
-        money_num_Rect = money_num_text.get_rect()
-        pygame.draw.rect(self.win, 0, [80, 40, 80, 40])
-        money_num_Rect.center = (91+mr_center_move*7.5, 60)
-        self.win.blit(money_num_text, money_num_Rect)
-        
+        # money
+        money_text = self.set_font.render(f"money: {self.money}", True, (255, 255, 255))
+        self.win.blit(money_text, (5, 50))
+
         # draw_Virus
         for i in range(self.virus_limit):
-            if i < 5:
-                if i < self.virus_limit-self.virus_num:
-                    self.win.blit(self.virus_gray_img, (int(self.width / 2) +
-                                                        2.5 * self.virus_gray_img.get_width() -
-                                                        (i+1) * self.virus_gray_img.get_width(),
-                                                        self.virus_gray_img.get_width()))
-                if i < self.virus_num:
-                    self.win.blit(self.virus_img, (int(self.width / 2) -
-                                                   2.5 * self.virus_img.get_width() +
-                                                   i * self.virus_img.get_width(), 0))
-            else:
-                j = i-5
-                if i < self.virus_limit-self.virus_num:
-                    self.win.blit(self.virus_gray_img, (int(self.width / 2) +
-                                                        2.5 * self.virus_gray_img.get_width() -
-                                                        (j+1) * self.virus_gray_img.get_width(), 0))
-                if i < self.virus_num:
-                    self.win.blit(self.virus_img, (int(self.width / 2) -
-                                                   2.5 * self.virus_img.get_width() +
-                                                   j * self.virus_img.get_width(),
-                                                   self.virus_img.get_width()))
+            self.win.blit(self.virus_gray_img,
+                          (self.width//2 - self.virus_gray_img.get_width() * (2.5 - i % 5), self.virus_gray_img.get_height()*(i // 5)))
+        for i in range(self.virus_num):
+            self.win.blit(self.virus_img,
+                          (self.width//2 - self.virus_img.get_width() * (2.5 - i % 5), self.virus_img.get_height()*(i // 5)))
+
         # draw tower
         for tw in self.towers:
-            tw.show_warning(self.win)
             tw.draw(self.win)
+
         # draw enemy
         for en in self.enemies:
             en.draw(self.win)
 
-        pygame.display.update()                 
+        # draw button frame
+        for btn in self.buttons:
+            if btn.frame:
+                btn.draw_frame(self.win)
 
-    def game_run(self):
+        # draw tower menu
+        self.tower_menu.draw(self.win)
+        for name in self.tower_menu.item_names:
+            if self.tower_menu.buttons[name].frame:
+                self.tower_menu.buttons[name].draw_frame(self.win)
+
+        # draw selected item
+        if self.selected_item:
+            self.selected_item.draw(self.win)
+
+        pygame.display.update()
+
+    def raise_warning(self, text):
+        text_surface = pygame.font.SysFont("comicsans", 25).render(text, True, (255, 255, 255))
+        self.win.blit(text_surface, (self.win.get_width() // 2 - text_surface.get_width() // 2, 100))
+
+        #
+        for tw in self.towers:
+            tw.raise_warning(self.win)
+
+    def GameRun(self):
+        # initialization
         run = True
         paused = False
         clock = pygame.time.Clock()
         self.start_time = pygame.time.get_ticks()
         self.game_screen()
-        self.gamemusic()
+        self.game_music()
         while run:
             clock.tick(FPS)
             self.win.blit(self.gamebg, (0, 0))
+            x, y = pygame.mouse.get_pos()
             for event in pygame.event.get():
-                x, y = pygame.mouse.get_pos()
-
                 if event.type == pygame.QUIT:
                     run = False
 
@@ -171,42 +161,146 @@ class Game:
                     if event.key == pygame.K_SPACE:
                         paused = not paused
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN:  # every action related to "click"
                     # turn on/off the music
-                    if self.gamemuse_btn[0] <= x <= self.gamemuse_btn[0] + self.gamemuse_btn[2] and self.gamemuse_btn[1] <= y <= self.gamemuse_btn[1] + self.gamemuse_btn[3]:
+                    if self.game_muse_btn.get_touched(x, y):
                         pygame.mixer.music.pause()
-                    elif self.gamesound_btn[0] <= x <= self.gamesound_btn[0] + self.gamesound_btn[2] and self.gamesound_btn[1] <= y <= self.gamesound_btn[1] + self.gamesound_btn[3]:
+                    elif self.game_sound_btn.get_touched(x, y):
                         pygame.mixer.music.unpause()
+
                     # click the tower
                     for tw in self.towers:
-                        tw.get_clicked((x, y))
-                        tw.upgrade((x, y))
+                        tw.call_menu(x, y)
+                        tw.upgrade(x, y, self.money)
+                        self.money -= tw.cost
+                        tw.cost = 0
+                    # click the tower menu
+                    if event.button == 3:
+                        self.selected_item = None
+                    if self.selected_item:
+                        new_tower = self.selected_item.drop(x, y)
+                        if self.money >= new_tower.price:
+                            self.money -= new_tower.price
+                            self.towers.append(new_tower)
+                        else:
+                            self.warning_text = f"You don't have enough money to pay for the tower({new_tower.price})"
+                    self.selected_item = self.tower_menu.get_items(x, y)
 
             # generate monster
             if not paused:
                 self.generate_enemies()
 
-            # enemy loop
-            for en in self.enemies:
-                if en.y > 150:
-                    en.move()
-                else:
-                    self.enemies.remove(en)
-                    self.virus_num -= 1
+            # button loop
+            for btn in self.buttons:
+                btn.create_frame(x, y)
+            for name in self.tower_menu.item_names:
+                self.tower_menu.buttons[name].create_frame(x, y)
 
             # tower loop
             for tw in self.towers:
                 tw.attack(self.enemies)
 
-            # draw outer frame of the buttons
-            for btn, btn_out in zip(self.buttons, self.buttons_out):
-                if btn[0] <= x <= btn[0] + btn[2] and btn[1] <= y <= btn[1] + btn[3]:
-                    pygame.draw.rect(self.win, WHITE, btn_out, 10)
-                    break
+            # enemy loop
+            for en in self.enemies:
+                en.move()
+                if en.y < 160:
+                    self.enemies.remove(en)
+                    self.virus_num -= 1
+                if en.health <= 0:
+                    self.money += 10
+                    self.enemies.remove(en)
+
+            # selected item
+            if self.selected_item:
+                self.selected_item.x, self.selected_item.y = x, y
+
+            # draw all the stuff
+            self.raise_warning(self.warning_text)
             self.draw()
         pygame.quit()
 
-                    
+
+class TowerMenu:
+    def __init__(self):
+        self.item_names = ["alcohol", "rapid test", "pcr"]
+        # image
+        self.tower_menu_image = pygame.transform.scale(pygame.image.load("images/treatment.png"), (100, 300))
+        self.images = {"alcohol": pygame.transform.scale(pygame.image.load("images/alcohol.png"), (20, 60)),
+                       "rapid test": pygame.transform.scale(pygame.image.load("images/rapid_test.png"), (65, 65)),
+                       "pcr": pygame.transform.scale(pygame.image.load("images/pcr.png"), (65, 65)),
+                       }
+        # button
+        self.buttons = {"alcohol": Buttons(960, 150, self.images["alcohol"].get_width(), self.images["alcohol"].get_height()),
+                        "rapid test": Buttons(940, 230, self.images["rapid test"].get_width(), self.images["rapid test"].get_height()),
+                        "pcr": Buttons(940, 320, self.images["pcr"].get_width(), self.images["pcr"].get_height()),
+                        }
+
+    def draw(self, win):
+        win.blit(self.tower_menu_image, (920, 100))
+        for name in self.item_names:
+            win.blit(self.images[name], (self.buttons[name].x, self.buttons[name].y))
+
+    def get_items(self, x, y):
+        for name in self.item_names:
+            if self.buttons[name].get_touched(x, y):
+                return SelectedItems(x, y, self.images[name], name)
+
+
+class Buttons:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.surface = pygame.Rect(x, y, width, height)
+        self.frame = None
+
+    def get_touched(self, x, y):
+        if self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height:
+            return True
+        return False
+
+    def create_frame(self, x, y):
+        if self.get_touched(x, y):
+            self.frame = pygame.Rect(self.x-5, self.y-5, self.width+10, self.height+10)
+        else:
+            self.frame = None
+
+    def draw_frame(self, win):
+        pygame.draw.rect(win, WHITE, self.frame, 10)
+
+
+class SelectedItems:
+    def __init__(self, x, y, image, name):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.name = name
+
+    def draw(self, win):
+        win.blit(self.image, (self.x-self.image.get_width()//2, self.y-self.image.get_height()//2))
+
+    def drop(self, x, y):
+        if self.name == "alcohol":
+            return Alcohol(x, y)
+        elif self.name == "rapid test":
+            return RapidTest(x, y)
+        elif self.name == "pcr":
+            return Pcr(x, y)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
