@@ -10,7 +10,8 @@ BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
-
+WIDTH = 1024
+HEIGHT = 600
 
 class Buttons:
     def __init__(self, x, y, image=None):
@@ -66,10 +67,11 @@ class FunctionMenu:
                         "stop": self.stop_btn,
                         }
         # font
-        self.font_size = 25
+        self.font_size = 30
         self.font = pygame.font.SysFont("comicsans", self.font_size)
         # menu size
-        self.width, self.height = 1024, 600
+        self.width = WIDTH
+        self.height = HEIGHT
         # time
         self.start_time = time.time()
 
@@ -121,7 +123,7 @@ class FunctionMenu:
         win.blit(time_text, time_Rect)
 
 
-class TowerMenu:
+class BuildMenu:
     def __init__(self):
         self.item_names = ["alcohol", "rapid test", "pcr"]
         # image
@@ -168,13 +170,15 @@ class TowerMenu:
         :param y: int
         :param tech_level: int
         :param money: int
-        :return: (int, int)
+        :return: (int, int, str)
         """
+        notice = None
         if self.upgrade_button.get_touched(x, y):
             if money > self.upgrade_market_price[tech_level] and tech_level < 2:
                 money -= self.upgrade_market_price[tech_level]
                 tech_level += 1
-        return (tech_level, money)
+                text = "Your technology is level up"
+        return (tech_level, money, notice)
 
 
 class SelectedItems:
@@ -194,12 +198,15 @@ class SelectedItems:
         :param money: int
         :return: (int, tower object)
         """
+        notice = None
         if money > self.market_price:
             if self.name == "alcohol":
-                dropped_item =  Alcohol(self.x, self.y)
+                dropped_item =  Alcohol(self.x, self.y, self.name)
             elif self.name == "rapid test":
-                dropped_item = RapidTest(self.x, self.y)
+                dropped_item = RapidTest(self.x, self.y, self.name)
             else:
-                dropped_item = Pcr(self.x, self.y)
-            return (money - self.market_price, dropped_item)
-        return(money, None)
+                dropped_item = Pcr(self.x, self.y, self.name)
+
+            notice = f"Pay {self.market_price} for {self.name}"
+            return (money - self.market_price, dropped_item, notice)
+        return(money, None, notice)
