@@ -6,9 +6,9 @@ pygame.init()
 pygame.mixer.init()
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)  # 綠色
-RED = (255, 0, 0)  # 紅色
-BLUE = (0, 0, 255)  # 藍色
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 WIDTH, HEIGHT = 1024, 600
 FPS = 60
 
@@ -16,7 +16,7 @@ FPS = 60
 class MainMenu:
     def __init__(self):
         # win
-        self.menuwin = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.menu_win = pygame.display.set_mode((WIDTH, HEIGHT))
         # background
         self.bg = pygame.image.load(os.path.join("images/Menu.png"))
         self.bg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Menu.png")), (WIDTH, HEIGHT))
@@ -34,7 +34,7 @@ class MainMenu:
     
     def display(self):
         pygame.display.set_caption("Covid-19 Defense Game")
-        self.menuwin.blit(self.bg, (0, 0))
+        self.menu_win.blit(self.bg, (0, 0))
     
     def music(self):
         pygame.mixer.music.load("./sound/menu.wav")
@@ -49,7 +49,7 @@ class MainMenu:
         self.music()
         while run:
             clock.tick(FPS)
-            self.menuwin.blit(self.bg, (0, 0))
+            self.menu_win.blit(self.bg, (0, 0))
             x, y = pygame.mouse.get_pos()
             for event in pygame.event.get():
                 # quit
@@ -63,7 +63,7 @@ class MainMenu:
                         self.sound.play()
                         pygame.mixer.music.pause()
                         g = Game()
-                        g.GameRun()
+                        g.game_run()
                         run = False
                     elif self.muse_btn[0] <= x <= self.muse_btn[0] + self.muse_btn[2] \
                             and self.muse_btn[1] <= y <= self.muse_btn[1] + self.muse_btn[3]:
@@ -76,7 +76,7 @@ class MainMenu:
             # draw the outer frame of the button
             for btn, btn_frm in zip(self.buttons, self.buttons_frame):
                 if btn[0] <= x <= btn[0] + btn[2] and btn[1] <= y <= btn[1] + btn[3]:
-                    pygame.draw.rect(self.menuwin, WHITE, btn_frm, 10)
+                    pygame.draw.rect(self.menu_win, WHITE, btn_frm, 10)
 
             pygame.display.update()
         pygame.quit()

@@ -67,7 +67,7 @@ class Game:
             self.bulletin_board.receive("MUSIC ON!")
 
         if not self.game_paused:
-        # click the tower
+            # click the tower
             for tw in self.towers:
                 tw.call_menu(x, y)
                 # upgrade tower
@@ -157,7 +157,7 @@ class Game:
         for en in self.enemies:
             en.draw(self.win)
 
-    def GameRun(self):
+    def game_run(self):
         # initialization
         run = True
         clock = pygame.time.Clock()
@@ -206,6 +206,7 @@ class Game:
 
 class EnemyGenerator:
     random.seed()
+
     def __init__(self):
         self.enemy_nums = [10, 20, 30, 40, 50]
         self.enemy_health = [10, 12, 14, 15, 15]
@@ -250,22 +251,3 @@ class BulletinBoard:
         if time.time() - self.time < self.duration:
             text_surface = self.font.render(self.text, True, WHITE)
             win.blit(text_surface, (WIDTH//2 - text_surface.get_width()//2, 550))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
