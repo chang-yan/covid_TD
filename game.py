@@ -40,8 +40,7 @@ class Game:
         self.gamebg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Map.png")), (WIDTH, HEIGHT))
         # attribute
         self.money = 2000
-        self.lives = 1
-        self.level = 1
+        self.lives = 10
         self.tech_level = 0
         # base
         self.base = pygame.Rect(430, 90, 195, 130)
@@ -155,7 +154,7 @@ class Game:
         # base
         pygame.draw.rect(self.gamebg, BLACK, pygame.Rect(430, 90, 195, 130), 5)
         # function menu
-        self.func_menu.draw(self.win, self.level, self.tech_level, self.lives, self.money)
+        self.func_menu.draw(self.win, self.wave+1, self.tech_level, self.lives, self.money)
         # draw tower menu
         self.build_menu.draw(self.win)
         if self.build_menu.upgrade_button.frame:
@@ -208,7 +207,7 @@ class Game:
                     self.click_action(event, x, y)
 
             if self.is_game_over:
-                continue
+                continuehttps://www.youtube.com/watch?v=mqgKgzP88JY&ab_channel=%E5%BC%B5%E6%B7%BB%E9%BE%8D
 
             # processing
             if not self.game_paused:
