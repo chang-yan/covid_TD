@@ -75,7 +75,7 @@ class FunctionMenu:
         # time
         self.start_time = time.time()
 
-    def draw(self, win, level, tech_level, lives, money):
+    def draw(self, win, wave, tech_level, lives, money):
         """
         show all the information on the function menu
         :param win: window
@@ -86,7 +86,7 @@ class FunctionMenu:
         :return: None
         """
         # level
-        text = self.font.render(f"Level: {level}", True, (255, 255, 255))
+        text = self.font.render(f"Wave: {wave}", True, (255, 255, 255))
         win.blit(text, (5, 10))
 
         # money
