@@ -11,8 +11,8 @@ mutation_images = [pygame.transform.scale(pygame.image.load(os.path.join(mutatio
 
 
 class Virus(Enemy):
-    def __init__(self, is_mutation, max_health):
-        super().__init__(is_mutation, max_health)
+    def __init__(self, is_mutation, max_health, path):
+        super().__init__(is_mutation, max_health, path)
         self.name = "normal_virus"
         self.money = 15
         self.start_time = 0

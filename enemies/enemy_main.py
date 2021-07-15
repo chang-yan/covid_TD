@@ -10,22 +10,13 @@ virus_img2 = pygame.transform.scale(pygame.image.load("./enemies/images/Virus.pn
 
 
 class Enemy:
-    def __init__(self, is_mutation, max_health):
+    def __init__(self, is_mutation, max_health, path):
         self.width = 40
         self.height = 48
         self.animation_count = 0
         self.max_health = max_health if is_mutation else max_health//2
         self.health = self.max_health
-        self.path = [(22, 308), (52, 283), (84, 283), (110, 305), (116, 341),
-                     (115, 375), (112, 405), (116, 433), (135, 455), (159, 475),
-                     (188, 480), (217, 481), (243, 474), (267, 463), (291, 454),
-                     (315, 441), (334, 423), (343, 398), (339, 368), (328, 345),
-                     (305, 331), (282, 322), (264, 303), (255, 283), (259, 259),
-                     (274, 239), (294, 225), (318, 214), (347, 212), (373, 217),
-                     (394, 230), (410, 250), (429, 266), (446, 282), (465, 295),
-                     (483, 310), (502, 321), (523, 309), (535, 282), (535, 254),
-                     (533, 230), (532, 196)]
-        self.path = [(px+random.randint(1, 5), py+random.randint(1, 15))for px, py in self.path]
+        self.path = path
         self.x = self.path[0][0]
         self.y = self.path[0][1]
         self.image = None
