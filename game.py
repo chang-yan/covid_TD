@@ -14,7 +14,21 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 FPS = 60
-
+PATH_0 = [(22, 308), (52, 283), (84, 283), (110, 305), (116, 341),
+          (115, 375), (112, 405), (116, 433), (135, 455), (159, 475),
+          (188, 480), (217, 481), (243, 474), (267, 463), (291, 454),
+          (315, 441), (334, 423), (343, 398), (339, 368), (328, 345),
+          (305, 331), (282, 322), (264, 303), (255, 283), (259, 259),
+          (274, 239), (294, 225), (318, 214), (347, 212), (373, 217),
+          (394, 230), (410, 250), (429, 266), (446, 282), (465, 295),
+          (483, 310), (502, 321), (523, 309), (535, 282), (535, 254),
+          (533, 230), (532, 196)]
+PATH_1 = [(574, 585), (581, 559), (600, 534), (621, 514), (645, 500), (668, 488), (693, 492), (716, 500),
+          (742, 501), (769, 501), (796, 502), (823, 501), (848, 495), (868, 475), (887, 453), (874, 426),
+          (851, 408), (828, 396), (801, 382), (779, 364), (763, 342), (775, 313), (800, 294), (827, 276),
+          (845, 248), (835, 222), (812, 209), (785, 200), (757, 206), (727, 207), (701, 220), (680, 233),
+          (653, 245), (630, 262), (611, 280), (585, 302), (558, 318), (530, 324), (523, 294), (533, 262),
+          (541, 230), (543, 189)]
 WIDTH = 1024
 HEIGHT = 600
 
@@ -26,7 +40,7 @@ class Game:
         self.gamebg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Map.png")), (WIDTH, HEIGHT))
         # attribute
         self.money = 2000
-        self.lives = 6
+        self.lives = 1
         self.level = 1
         self.tech_level = 0
         # base
@@ -47,7 +61,8 @@ class Game:
         self.bulletin_board = BulletinBoard()
         #
         self.game_paused = False
-        self.wave_paused = False
+        self.wave_paused = True
+        self.is_game_over =  False
 
     def game_music(self):
         pygame.mixer.music.load("./sound/menu.wav")
@@ -98,7 +113,7 @@ class Game:
 
     def game_processing(self, x, y):
         # generate monster
-        if not self.wave_paused:
+        if not self.wave_paused and self.wave < 5:
             self.enemy_generator.generate(self.enemies, self.wave)
             if self.enemy_generator.enemy_nums[self.wave] == 0:
                 self.wave += 1
@@ -129,6 +144,7 @@ class Game:
         # base
         if self.lives <= 0:
             self.bulletin_board.receive("GAME OVER")
+            self.is_game_over = True
 
         # selected item
         if self.selected_item:
@@ -191,6 +207,9 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.click_action(event, x, y)
 
+            if self.is_game_over:
+                continue
+
             # processing
             if not self.game_paused:
                 self.game_processing(x, y)
@@ -213,6 +232,7 @@ class EnemyGenerator:
         self.gen_enemy_time = time.time() - 1
         self.period = [2, 2, 1, 1, 0.6]
         self.mutation_probability = [0.1, 0.15, 0.3, 0.4, 0.4]
+        self.path = [PATH_0, PATH_1]
 
     def generate(self, enemies, wave):
         """
@@ -225,9 +245,9 @@ class EnemyGenerator:
             self.gen_enemy_time = time.time()
             self.enemy_nums[wave] -= 1
             if random.random() < self.mutation_probability[wave]:
-                enemies.append(random.choice([Virus(True, self.enemy_health[wave])]))
+                enemies.append(random.choice([Virus(True, self.enemy_health[wave], self.path[wave % 2])]))
             else:
-                enemies.append(random.choice([Virus(False, self.enemy_health[wave])]))
+                enemies.append(random.choice([Virus(False, self.enemy_health[wave], self.path[wave % 2])]))
 
 
 class BulletinBoard:
