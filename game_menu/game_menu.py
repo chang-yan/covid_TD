@@ -174,10 +174,14 @@ class BuildMenu:
         """
         notice = None
         if self.upgrade_button.get_touched(x, y):
-            if money > self.upgrade_market_price[tech_level] and tech_level < 2:
+            if tech_level >= 2:
+                notice = f"Already the highest level"
+            elif money < self.upgrade_market_price[tech_level]:
+                notice = f"{self.upgrade_market_price[tech_level]} is needed for upgrade"
+            else:
                 money -= self.upgrade_market_price[tech_level]
+                notice = f"Pay {self.upgrade_market_price[tech_level]} to upgrade technology level"
                 tech_level += 1
-                text = "Your technology is level up"
         return (tech_level, money, notice)
 
 
