@@ -14,21 +14,6 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 FPS = 60
-PATH_0 = [(22, 308), (52, 283), (84, 283), (110, 305), (116, 341),
-          (115, 375), (112, 405), (116, 433), (135, 455), (159, 475),
-          (188, 480), (217, 481), (243, 474), (267, 463), (291, 454),
-          (315, 441), (334, 423), (343, 398), (339, 368), (328, 345),
-          (305, 331), (282, 322), (264, 303), (255, 283), (259, 259),
-          (274, 239), (294, 225), (318, 214), (347, 212), (373, 217),
-          (394, 230), (410, 250), (429, 266), (446, 282), (465, 295),
-          (483, 310), (502, 321), (523, 309), (535, 282), (535, 254),
-          (533, 230), (532, 196)]
-PATH_1 = [(574, 585), (581, 559), (600, 534), (621, 514), (645, 500), (668, 488), (693, 492), (716, 500),
-          (742, 501), (769, 501), (796, 502), (823, 501), (848, 495), (868, 475), (887, 453), (874, 426),
-          (851, 408), (828, 396), (801, 382), (779, 364), (763, 342), (775, 313), (800, 294), (827, 276),
-          (845, 248), (835, 222), (812, 209), (785, 200), (757, 206), (727, 207), (701, 220), (680, 233),
-          (653, 245), (630, 262), (611, 280), (585, 302), (558, 318), (530, 324), (523, 294), (533, 262),
-          (541, 230), (543, 189)]
 WIDTH = 1024
 HEIGHT = 600
 
@@ -38,10 +23,14 @@ class Game:
         # screen
         self.win = pygame.display.set_mode((WIDTH, HEIGHT))
         self.gamebg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Map.png")), (WIDTH, HEIGHT))
-        # attribute
+        # information
         self.money = 2000
         self.lives = 10
         self.tech_level = 0
+        self.game_time = time.time()
+        self.start_time = time.time()
+        # main menu
+        self.func_menu = FunctionMenu()
         # base
         self.base = pygame.Rect(430, 90, 195, 130)
         # enemy
@@ -52,24 +41,22 @@ class Game:
         self.build_menu = BuildMenu()
         self.selected_item = None
         self.towers = []
-        # main menu
-        self.func_menu = FunctionMenu()
         # sound
         self.sound = pygame.mixer.Sound("./sound/sound.flac")
         # announcement
         self.bulletin_board = BulletinBoard()
-        #
+        # status
         self.game_paused = False
         self.wave_paused = True
         self.is_game_over =  False
 
-    def game_music(self):
+    def play_music(self):
         pygame.mixer.music.load("./sound/menu.wav")
         pygame.mixer.music.set_volume(0.2)
         self.sound.set_volume(0.2)
         pygame.mixer.music.play(-1)
 
-    def click_action(self, event, x, y):
+    def get_click(self, event, x, y):
         """
         run all that related to "click" action
         """
@@ -79,6 +66,10 @@ class Game:
         elif self.func_menu.buttons["sound"].get_touched(x, y):
             pygame.mixer.music.unpause()
             self.bulletin_board.receive("MUSIC ON!")
+        elif self.func_menu.buttons["continue"].get_touched(x, y):
+            self.game_paused = False
+        elif self.func_menu.buttons["pause"].get_touched(x, y):
+            self.game_paused = True
 
         if not self.game_paused:
             # click the tower
@@ -110,7 +101,9 @@ class Game:
                     self.bulletin_board.receive(drop_text)
             self.selected_item = self.build_menu.get_items(x, y)
 
-    def game_processing(self, x, y):
+    def execute(self, x, y):
+        # time
+        self.game_time = int(time.time() - self.start_time)
         # generate monster
         if not self.wave_paused and self.wave < 5:
             self.enemy_generator.generate(self.enemies, self.wave)
@@ -154,7 +147,8 @@ class Game:
         # base
         pygame.draw.rect(self.gamebg, BLACK, pygame.Rect(430, 90, 195, 130), 5)
         # function menu
-        self.func_menu.draw(self.win, self.wave+1, self.tech_level, self.lives, self.money)
+        self.func_menu.draw(self.win, self.wave+1, self.tech_level, self.lives, self.money, self.game_time)
+
         # draw tower menu
         self.build_menu.draw(self.win)
         if self.build_menu.upgrade_button.frame:
@@ -162,12 +156,15 @@ class Game:
         for name, btn in self.build_menu.tower_buttons.items():
             if btn.frame:
                 btn.draw_frame(self.win)
+
         # draw selected item
         if self.selected_item:
             self.selected_item.draw(self.win)
+
         # draw tower
         for tw in self.towers:
             tw.draw(self.win, self.tech_level)
+
         # draw enemy
         for en in self.enemies:
             en.draw(self.win)
@@ -177,48 +174,40 @@ class Game:
         run = True
         clock = pygame.time.Clock()
         pygame.display.set_caption("Covid-19 Defense Game")
-        self.game_music()
+        self.play_music()
         while run:
             clock.tick(FPS)
             self.win.blit(self.gamebg, (0, 0))
             x, y = pygame.mouse.get_pos()
 
-            if self.game_paused:
-                self.bulletin_board.receive("press SPACE to continue")
-            elif self.wave_paused:
-                self.bulletin_board.receive("Press y for next wave")
+            if self.wave_paused:
+                self.bulletin_board.receive("Press Y for next wave")
 
+            # player action
             for event in pygame.event.get():
                 # quit game
                 if event.type == pygame.QUIT:
                     run = False
-
                 # press action
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         run = False
-                    if event.key == pygame.K_SPACE:
-                        self.game_paused = not self.game_paused
                     if event.key == pygame.K_y:
                         self.wave_paused = False
-
                 # click action
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.click_action(event, x, y)
+                    self.get_click(event, x, y)
 
+            # computer action
             if self.is_game_over:
-                continuehttps://www.youtube.com/watch?v=mqgKgzP88JY&ab_channel=%E5%BC%B5%E6%B7%BB%E9%BE%8D
-
-            # processing
+                continue
             if not self.game_paused:
-                self.game_processing(x, y)
-
-            # draw all the stuff
-            self.draw()
-
-            # post announcement
-            self.bulletin_board.post(self.win)
-            pygame.display.update()
+                self.execute(x, y)
+                # draw all the stuff
+                self.draw()
+                # post announcement
+                self.bulletin_board.post(self.win)
+                pygame.display.update()
         pygame.quit()
 
 
@@ -231,7 +220,6 @@ class EnemyGenerator:
         self.gen_enemy_time = time.time() - 1
         self.period = [2, 2, 1, 1, 0.6]
         self.mutation_probability = [0.1, 0.15, 0.3, 0.4, 0.4]
-        self.path = [PATH_0, PATH_1]
 
     def generate(self, enemies, wave):
         """
@@ -244,9 +232,9 @@ class EnemyGenerator:
             self.gen_enemy_time = time.time()
             self.enemy_nums[wave] -= 1
             if random.random() < self.mutation_probability[wave]:
-                enemies.append(random.choice([Virus(True, self.enemy_health[wave], self.path[wave % 2])]))
+                enemies.append(Virus(True, self.enemy_health[wave], wave % 2))
             else:
-                enemies.append(random.choice([Virus(False, self.enemy_health[wave], self.path[wave % 2])]))
+                enemies.append(Virus(False, self.enemy_health[wave], wave % 2))
 
 
 class BulletinBoard:

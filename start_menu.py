@@ -20,23 +20,18 @@ class MainMenu:
         # background
         self.bg = pygame.image.load(os.path.join("images/Menu.png"))
         self.bg = pygame.transform.scale(pygame.image.load(os.path.join("images", "Menu.png")), (WIDTH, HEIGHT))
-        # start button
-        self.start_btn = pygame.Rect(349, 315, 338, 101)  # x y 寬 高
-        self.start_btn_frame = pygame.Rect(344, 310, 348, 111)
-        self.sound_btn = pygame.Rect(725, 525, 90, 70)
-        self.sound_btn_frame = pygame.Rect(720, 520, 100, 80)
-        self.muse_btn = pygame.Rect(830, 525, 90, 70)
-        self.muse_btn_frame = pygame.Rect(820, 520, 100, 80)
-        self.buttons = [self.start_btn, self.sound_btn, self.muse_btn]
-        self.buttons_frame = [self.start_btn_frame, self.sound_btn_frame, self.muse_btn_frame]
+        # button
+        self.start_btn = Buttons(349, 315, 338, 101)  # x, y, width, height
+        self.sound_btn = Buttons(725, 525, 90, 70)
+        self.muse_btn = Buttons(830, 525, 90, 70)
+        self.buttons = {"sound": self.sound_btn,
+                        "muse": self.muse_btn,
+                        "start": self.start_btn,
+                        }
         # music and sound
         self.sound = pygame.mixer.Sound("./sound/sound.flac")
     
-    def display(self):
-        pygame.display.set_caption("Covid-19 Defense Game")
-        self.menu_win.blit(self.bg, (0, 0))
-    
-    def music(self):
+    def play_music(self):
         pygame.mixer.music.load("./sound/menu.wav")
         pygame.mixer.music.set_volume(0.2)
         pygame.mixer.music.play(-1)
@@ -45,8 +40,8 @@ class MainMenu:
     def menu_run(self):
         run = True
         clock = pygame.time.Clock()
-        self.display()
-        self.music()
+        pygame.display.set_caption("Covid-19 Defense Game")
+        self.play_music()
         while run:
             clock.tick(FPS)
             self.menu_win.blit(self.bg, (0, 0))
@@ -58,25 +53,58 @@ class MainMenu:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     # check if hit start btn
-                    if self.start_btn[0] <= x <= self.start_btn[0] + self.start_btn[2] \
-                            and self.start_btn[1] <= y <= self.start_btn[1] + self.start_btn[3]:
+                    if self.start_btn.get_touched(x, y):
                         self.sound.play()
                         pygame.mixer.music.pause()
                         g = Game()
                         g.game_run()
                         run = False
-                    elif self.muse_btn[0] <= x <= self.muse_btn[0] + self.muse_btn[2] \
-                            and self.muse_btn[1] <= y <= self.muse_btn[1] + self.muse_btn[3]:
+                    elif self.muse_btn.get_touched(x, y):
                         pygame.mixer.music.pause()
                         self.sound.play()
-                    elif self.sound_btn[0] <= x <= self.sound_btn[0] + self.sound_btn[2] \
-                            and self.sound_btn[1] <= y <= self.sound_btn[1] + self.sound_btn[3]:
+                    elif self.sound_btn.get_touched(x, y):
                         pygame.mixer.music.unpause()
 
-            # draw the outer frame of the button
-            for btn, btn_frm in zip(self.buttons, self.buttons_frame):
-                if btn[0] <= x <= btn[0] + btn[2] and btn[1] <= y <= btn[1] + btn[3]:
-                    pygame.draw.rect(self.menu_win, WHITE, btn_frm, 10)
+            # while cursor is moving
+            for name, btn in self.buttons.items():
+                btn.create_frame(x, y)
+                btn.draw_frame(self.menu_win)
 
             pygame.display.update()
         pygame.quit()
+
+
+class Buttons:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.frame = None
+
+    def get_touched(self, x, y):
+        """
+        if cursor position is on the button, return True
+        :param x: int
+        :param y: int
+        :return: Bool
+        """
+        if self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height:
+            return True
+        return False
+
+    def create_frame(self, x, y):
+        """
+        if cursor position is on the button, create button frame
+        :param x: int
+        :param y: int
+        :return: None
+        """
+        if self.get_touched(x, y):
+            self.frame = pygame.Rect(self.x - 5, self.y - 5, self.width + 10, self.height + 10)
+        else:
+            self.frame = None
+
+    def draw_frame(self, win):
+        if self.frame:
+            pygame.draw.rect(win, WHITE, self.frame, 10)
