@@ -39,8 +39,11 @@ class Game:
         self.enemy_generator = EnemyGenerator()
         # tower
         self.build_menu = BuildMenu()
-        self.selected_item = None
+        self.selected_building= None
         self.towers = []
+        self.vacant_lots = [VacantLot(50, 350), VacantLot(180, 250), VacantLot(200, 420), VacantLot(340, 270),
+                            VacantLot(400, 450), VacantLot(860, 340), VacantLot(660, 570), VacantLot(680, 330),
+                            VacantLot(870, 140)]
         # sound
         self.sound = pygame.mixer.Sound("./sound/sound.flac")
         # announcement
@@ -84,6 +87,7 @@ class Game:
                 self.money, selling_text = tw.sells(x, y, self.money)
                 if selling_text:
                     self.towers.remove(tw)
+                    self.vacant_lots.append(VacantLot(tw.x, tw.y))
                     self.bulletin_board.receive(selling_text)
 
             # click the upgrade button
@@ -93,13 +97,16 @@ class Game:
 
             # click the build menu
             if event.button == 3:
-                self.selected_item = None
-            if self.selected_item:
-                self.money, new_tower, drop_text = self.selected_item.drop(self.money)
-                if drop_text:
-                    self.towers.append(new_tower)
-                    self.bulletin_board.receive(drop_text)
-            self.selected_item = self.build_menu.get_items(x, y)
+                self.selected_building = None
+            if self.selected_building:
+                for vacant in self.vacant_lots:
+                    if vacant.building_in_range(self.selected_building):
+                        self.money, new_tower, drop_text = self.selected_building.drop(self.money, vacant.x, vacant.y)
+                        self.towers.append(new_tower)
+                        self.bulletin_board.receive(drop_text)
+                        self.vacant_lots.remove(vacant)
+                        break
+            self.selected_building = self.build_menu.get_items(x, y)
 
     def execute(self, x, y):
         # time
@@ -139,9 +146,11 @@ class Game:
             self.is_game_over = True
 
         # selected item
-        if self.selected_item:
+        if self.selected_building:
             self.bulletin_board.receive("Press RIGHT click to cancel")
-            self.selected_item.x, self.selected_item.y = x, y
+            self.selected_building.x, self.selected_building.y = x, y
+
+        #
 
     def draw(self):
         # base
@@ -158,8 +167,8 @@ class Game:
                 btn.draw_frame(self.win)
 
         # draw selected item
-        if self.selected_item:
-            self.selected_item.draw(self.win)
+        if self.selected_building:
+            self.selected_building.draw(self.win)
 
         # draw tower
         for tw in self.towers:
@@ -168,6 +177,9 @@ class Game:
         # draw enemy
         for en in self.enemies:
             en.draw(self.win)
+
+        for v_lot in self.vacant_lots:
+            v_lot.draw(self.win)
 
     def game_run(self):
         # initialization
@@ -235,6 +247,24 @@ class EnemyGenerator:
                 enemies.append(Virus(True, self.enemy_health[wave], wave % 2))
             else:
                 enemies.append(Virus(False, self.enemy_health[wave], wave % 2))
+
+
+class VacantLot:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.width = 30
+        self.height = 30
+        self.image = pygame.transform.scale(pygame.image.load("images/vacant_lot.png"), (self.width, self.height))
+
+    def building_in_range(self, building):
+        if self.x - self.width//2 < building.x < self.x + self.width//2 \
+                and self.y - self.height//2 < building.y < self.y + self.height//2:
+            return True
+        return False
+
+    def draw(self, win):
+        win.blit(self.image, (self.x-self.width//2, self.y-self.height//2))
 
 
 class BulletinBoard:
