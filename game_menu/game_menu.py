@@ -1,5 +1,4 @@
 import pygame
-import os
 import time
 from towers.tower import Pcr, RapidTest, Alcohol
 
@@ -12,6 +11,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 WIDTH = 1024
 HEIGHT = 600
+
 
 class Buttons:
     def __init__(self, x, y, image=None):
@@ -76,11 +76,11 @@ class FunctionMenu:
         # time
         self.start_time = time.time()
 
-    def draw(self, win, wave, tech_level, lives, money, time):
+    def draw(self, win, wave, tech_level, lives, money, game_time):
         """
         show all the information on the function menu
         :param win: window
-        :param level: int
+        :param wave: int
         :param tech_level: int
         :param lives: int
         :param money: int
@@ -114,15 +114,15 @@ class FunctionMenu:
 
         # draw time
         pygame.draw.rect(win, BLACK, [0, self.height - 40, 80, 40])
-        minute = time // 60
-        second = time % 60
+        minute = game_time // 60
+        second = game_time % 60
         if second < 10:
             time_text = self.font.render(f"{minute}:0{second}", True, (255, 255, 255))
         else:
             time_text = self.font.render(f"{minute}:{second}", True, (255, 255, 255))
-        time_Rect = time_text.get_rect()
-        time_Rect.center = (40, self.height - 20)
-        win.blit(time_text, time_Rect)
+        time_rect = time_text.get_rect()
+        time_rect.center = (40, self.height - 20)
+        win.blit(time_text, time_rect)
 
 
 class BuildMenu:
@@ -132,17 +132,17 @@ class BuildMenu:
         self.tower_menu_image = pygame.transform.scale(pygame.image.load("game_menu/images/treatment.png"), (100, 350))
         # tower
         self.tower_images = [pygame.transform.scale(pygame.image.load("game_menu/images/alcohol.png"), (20, 60)),
-                       pygame.transform.scale(pygame.image.load("game_menu/images/rapid_test.png"), (65, 65)),
-                       pygame.transform.scale(pygame.image.load("game_menu/images/pcr.png"), (65, 65)),
-                       ]
+                             pygame.transform.scale(pygame.image.load("game_menu/images/rapid_test.png"), (65, 65)),
+                             pygame.transform.scale(pygame.image.load("game_menu/images/pcr.png"), (65, 65)),
+                             ]
         self.tower_buttons = {"alcohol": Buttons(960, 160, self.tower_images[0]),
-                        "rapid test": Buttons(940, 240, self.tower_images[1]),
-                        "pcr": Buttons(940, 330, self.tower_images[2]),
-                        }
+                              "rapid test": Buttons(940, 240, self.tower_images[1]),
+                              "pcr": Buttons(940, 330, self.tower_images[2]),
+                              }
         self.tower_market_price = {"alcohol": 100,
-                             "rapid test": 150,
-                             "pcr": 150,
-                             }
+                                   "rapid test": 150,
+                                   "pcr": 150,
+                                   }
         # tech
         self.upgrade_image = pygame.transform.scale(pygame.image.load("game_menu/images/upgrade.png"), (100, 45))
         self.upgrade_button = Buttons(920, 440, self.upgrade_image)
@@ -163,7 +163,7 @@ class BuildMenu:
         """
         for name, btn in self.tower_buttons.items():
             if btn.get_touched(x, y):
-                return SelectedItems(x, y, btn.image, name, self.tower_market_price[name])
+                return SelectedBuilding(x, y, btn.image, name, self.tower_market_price[name])
 
     def upgrade_tech_level(self, x, y, tech_level, money):
         """
@@ -184,21 +184,23 @@ class BuildMenu:
                 money -= self.upgrade_market_price[tech_level]
                 notice = f"Pay {self.upgrade_market_price[tech_level]} to upgrade technology level"
                 tech_level += 1
-        return (tech_level, money, notice)
+        return tech_level, money, notice
 
 
-class SelectedItems:
+class SelectedBuilding:
     def __init__(self, x, y, image, name, market_price):
         self.x = x
         self.y = y
         self.image = image
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
         self.name = name
         self.market_price = market_price
 
     def draw(self, win):
-        win.blit(self.image, (self.x-self.image.get_width()//2, self.y-self.image.get_height()//2))
+        win.blit(self.image, (self.x - self.width//2, self.y - self.height//2))
 
-    def drop(self, money):
+    def drop(self, money, x, y):
         """
         if the money is enough to build a tower, drop the item (build the tower) and pay for it
         :param money: int
@@ -207,12 +209,12 @@ class SelectedItems:
         notice = None
         if money > self.market_price:
             if self.name == "alcohol":
-                dropped_item =  Alcohol(self.x, self.y, self.name)
+                dropped_item = Alcohol(x, y, self.name)
             elif self.name == "rapid test":
-                dropped_item = RapidTest(self.x, self.y, self.name)
+                dropped_item = RapidTest(x, y, self.name)
             else:
-                dropped_item = Pcr(self.x, self.y, self.name)
+                dropped_item = Pcr(x, y, self.name)
 
             notice = f"Pay {self.market_price} for {self.name}"
-            return (money - self.market_price, dropped_item, notice)
-        return(money, None, notice)
+            return money - self.market_price, dropped_item, notice
+        return money, None, notice
