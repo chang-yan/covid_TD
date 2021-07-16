@@ -46,7 +46,8 @@ class Buttons:
             self.frame = None
 
     def draw_frame(self, win):
-        pygame.draw.rect(win, WHITE, self.frame, 10)
+        if self.frame:
+            pygame.draw.rect(win, WHITE, self.frame, 10)
 
 
 class FunctionMenu:
@@ -59,12 +60,12 @@ class FunctionMenu:
         # buttons
         self.sound_btn = Buttons(695, 5)
         self.muse_btn = Buttons(780, 5)
-        self.start_btn = Buttons(860, 5)
-        self.stop_btn = Buttons(945, 5)
+        self.continue_btn = Buttons(860, 5)
+        self.pause_btn = Buttons(945, 5)
         self.buttons = {"sound": self.sound_btn,
                         "muse": self.muse_btn,
-                        "start": self.start_btn,
-                        "stop": self.stop_btn,
+                        "continue": self.continue_btn,
+                        "pause": self.pause_btn,
                         }
         # font
         self.font_size = 30
@@ -75,7 +76,7 @@ class FunctionMenu:
         # time
         self.start_time = time.time()
 
-    def draw(self, win, wave, tech_level, lives, money):
+    def draw(self, win, wave, tech_level, lives, money, time):
         """
         show all the information on the function menu
         :param win: window
@@ -99,8 +100,7 @@ class FunctionMenu:
 
         # draw button frame
         for key, btn in self.buttons.items():
-            if btn.frame:
-                btn.draw_frame(win)
+            btn.draw_frame(win)
 
         # draw_lives
         for i in range(self.max_lives):
@@ -114,10 +114,12 @@ class FunctionMenu:
 
         # draw time
         pygame.draw.rect(win, BLACK, [0, self.height - 40, 80, 40])
-        game_time = time.time() - self.start_time
-        game_time_sec = int((game_time % 60))
-        game_time_min = int(game_time // 60)
-        time_text = self.font.render(f"{game_time_min}:{game_time_sec}", True, (255, 255, 255))
+        minute = time // 60
+        second = time % 60
+        if second < 10:
+            time_text = self.font.render(f"{minute}:0{second}", True, (255, 255, 255))
+        else:
+            time_text = self.font.render(f"{minute}:{second}", True, (255, 255, 255))
         time_Rect = time_text.get_rect()
         time_Rect.center = (40, self.height - 20)
         win.blit(time_text, time_Rect)
