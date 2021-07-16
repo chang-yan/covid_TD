@@ -8,15 +8,32 @@ random.seed()
 virus_img1 = pygame.transform.scale(pygame.image.load("./enemies/images/Virus1.png"), (20, 20))
 virus_img2 = pygame.transform.scale(pygame.image.load("./enemies/images/Virus.png"), (20, 20))
 
+PATH_0 = [(22, 308), (52, 283), (84, 283), (110, 305), (116, 341),
+          (115, 375), (112, 405), (116, 433), (135, 455), (159, 475),
+          (188, 480), (217, 481), (243, 474), (267, 463), (291, 454),
+          (315, 441), (334, 423), (343, 398), (339, 368), (328, 345),
+          (305, 331), (282, 322), (264, 303), (255, 283), (259, 259),
+          (274, 239), (294, 225), (318, 214), (347, 212), (373, 217),
+          (394, 230), (410, 250), (429, 266), (446, 282), (465, 295),
+          (483, 310), (502, 321), (523, 309), (535, 282), (535, 254),
+          (533, 230), (532, 196)]
+PATH_1 = [(574, 585), (581, 559), (600, 534), (621, 514), (645, 500), (668, 488), (693, 492), (716, 500),
+          (742, 501), (769, 501), (796, 502), (823, 501), (848, 495), (868, 475), (887, 453), (874, 426),
+          (851, 408), (828, 396), (801, 382), (779, 364), (763, 342), (775, 313), (800, 294), (827, 276),
+          (845, 248), (835, 222), (812, 209), (785, 200), (757, 206), (727, 207), (701, 220), (680, 233),
+          (653, 245), (630, 262), (611, 280), (585, 302), (558, 318), (530, 324), (523, 294), (533, 262),
+          (541, 230), (543, 189)]
+PATH = [PATH_0, PATH_1]
+
 
 class Enemy:
-    def __init__(self, is_mutation, max_health, path):
+    def __init__(self, is_mutation, max_health, path_num):
         self.width = 40
         self.height = 48
         self.animation_count = 0
         self.max_health = max_health if is_mutation else max_health//2
         self.health = self.max_health
-        self.path = path
+        self.path = PATH[path_num]
         self.x = self.path[0][0]
         self.y = self.path[0][1]
         self.image = None
@@ -24,7 +41,6 @@ class Enemy:
         self.path_pos = 0
         self.money = 0
         self.move_count = 0
-        self.start_time = 0
         self.is_mutation = is_mutation
 
     def draw(self, win):
