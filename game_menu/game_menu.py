@@ -1,6 +1,6 @@
 import pygame
 import time
-from towers.tower import Pcr, RapidTest, Alcohol
+from towers.builder import TowerBuilder
 
 pygame.font.init()
 pygame.init()
@@ -156,14 +156,14 @@ class BuildMenu:
 
     def get_items(self, x, y):
         """
-        if the cursor is on the tower button (while clicked), select the tower
+        if the cursor is on the tower button (while clicked), call out the tower builder
         :param x: int
         :param y: int
         :return: item object
         """
         for name, btn in self.tower_buttons.items():
             if btn.get_touched(x, y):
-                return SelectedBuilding(x, y, btn.image, name, self.tower_market_price[name])
+                return TowerBuilder(x, y, btn.image, name, self.tower_market_price[name])
 
     def upgrade_tech_level(self, x, y, tech_level, money):
         """
@@ -187,34 +187,4 @@ class BuildMenu:
         return tech_level, money, notice
 
 
-class SelectedBuilding:
-    def __init__(self, x, y, image, name, market_price):
-        self.x = x
-        self.y = y
-        self.image = image
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        self.name = name
-        self.market_price = market_price
 
-    def draw(self, win):
-        win.blit(self.image, (self.x - self.width//2, self.y - self.height//2))
-
-    def drop(self, money, x, y):
-        """
-        if the money is enough to build a tower, drop the item (build the tower) and pay for it
-        :param money: int
-        :return: (int, tower object)
-        """
-        notice = None
-        if money > self.market_price:
-            if self.name == "alcohol":
-                dropped_item = Alcohol(x, y, self.name)
-            elif self.name == "rapid test":
-                dropped_item = RapidTest(x, y, self.name)
-            else:
-                dropped_item = Pcr(x, y, self.name)
-
-            notice = f"Pay {self.market_price} for {self.name}"
-            return money - self.market_price, dropped_item, notice
-        return money, None, notice
