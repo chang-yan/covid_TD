@@ -1,9 +1,9 @@
 import pygame
 import os
 import time
-import random
 from game_menu.game_menu import FunctionMenu, BuildMenu
-from enemies.virus import Virus
+from enemies.generator import EnemyGenerator
+from towers.builder import VacantLot
 
 pygame.mixer.init()
 pygame.font.init()
@@ -29,10 +29,10 @@ class Game:
         self.tech_level = 0
         self.game_time = time.time()
         self.start_time = time.time()
-        # main menu
-        self.func_menu = FunctionMenu()
         # base
         self.base = pygame.Rect(430, 90, 195, 130)
+        # main menu
+        self.func_menu = FunctionMenu()
         # enemy
         self.wave = 0
         self.enemies = []
@@ -100,10 +100,10 @@ class Game:
                 self.selected_building = None
             if self.selected_building:
                 for vacant in self.vacant_lots:
-                    if vacant.building_in_range(self.selected_building):
-                        self.money, new_tower, drop_text = self.selected_building.drop(self.money, vacant.x, vacant.y)
+                    if vacant.in_range(self.selected_building):
+                        self.money, new_tower, build_text = self.selected_building.build(self.money, vacant.x, vacant.y)
                         self.towers.append(new_tower)
-                        self.bulletin_board.receive(drop_text)
+                        self.bulletin_board.receive(build_text)
                         self.vacant_lots.remove(vacant)
                         break
             self.selected_building = self.build_menu.get_items(x, y)
@@ -221,50 +221,6 @@ class Game:
                 self.bulletin_board.post(self.win)
                 pygame.display.update()
         pygame.quit()
-
-
-class EnemyGenerator:
-    random.seed()
-
-    def __init__(self):
-        self.enemy_nums = [10, 20, 30, 40, 50]
-        self.enemy_health = [10, 12, 14, 15, 15]
-        self.gen_enemy_time = time.time() - 1
-        self.period = [2, 2, 1, 1, 0.6]
-        self.mutation_probability = [0.1, 0.15, 0.3, 0.4, 0.4]
-
-    def generate(self, enemies, wave):
-        """
-        generate the enemy to the enemy list according to the given wave
-        :param enemies: list
-        :param wave: int
-        :return: None
-        """
-        if time.time() - self.gen_enemy_time >= self.period[wave] and self.enemy_nums[wave] > 0:  # wave interval
-            self.gen_enemy_time = time.time()
-            self.enemy_nums[wave] -= 1
-            if random.random() < self.mutation_probability[wave]:
-                enemies.append(Virus(True, self.enemy_health[wave], wave % 2))
-            else:
-                enemies.append(Virus(False, self.enemy_health[wave], wave % 2))
-
-
-class VacantLot:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.width = 30
-        self.height = 30
-        self.image = pygame.transform.scale(pygame.image.load("images/vacant_lot.png"), (self.width, self.height))
-
-    def building_in_range(self, building):
-        if self.x - self.width//2 < building.x < self.x + self.width//2 \
-                and self.y - self.height//2 < building.y < self.y + self.height//2:
-            return True
-        return False
-
-    def draw(self, win):
-        win.blit(self.image, (self.x-self.width//2, self.y-self.height//2))
 
 
 class BulletinBoard:
